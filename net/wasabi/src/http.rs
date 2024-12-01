@@ -1,7 +1,5 @@
 #![no_std]
 
-pub mod http;
-
 pub struct HttpClient {}
 
 impl HttpClient {
@@ -10,13 +8,16 @@ impl HttpClient {
     }
 }
 
-extern create alloc;
+extern crate alloc;
+use alloc::format;
 use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+use noli::net::lookup_host;
+use noli::net::SocketAddr;
+use noli::net::TcpStream;
 use saba_core::error::Error;
 use saba_core::http::HttpResponse;
-use alloc::format;
-use create::alloc::string::ToString;
-use noli::net::lookup_host;
 
 impl HttpClient {
     pub fn get(&self, host: String, port: u16, path: String) -> Result<HttpResponse, Error>{
@@ -57,7 +58,7 @@ impl HttpClient {
         request.push_str("Connection: close\n");
         request.push('\n');
 
-        let _bytes_written = match stream.write(requesr.as_bytes()) {
+        let _bytes_written = match stream.write(request.as_bytes()) {
             Ok(bytes) => bytes,
             Err(_) => {
                 return Err(Error::Network(
