@@ -65,6 +65,28 @@ impl HttpClient {
                 ))
             }
         };
+
+        let mut received = Vec::new();
+        loop {
+            let mut buf = [0u8; 4096];
+            let bytes_read = match stream.read(&mut buf) {
+                Ok(bytes) => bytes,
+                Err(_) => {
+                    return Err(Error::Network(
+                        "Failed to receive a request from TCP stream".to_string(),
+                    ))
+                }
+            };
+            if bytes_read == 0 {
+                break;
+            }
+            received.extend_from_slice(&buf[..bytes_read]);
+        }
+
+        match core::str::from_utf8(&received) {
+            Ok(response) => HttpResponse::new(response.to_string()),
+            Err(e) => Err(Error::Network(format!("Invalid received respose: {}", e))),
+        }
     }
 }
 
